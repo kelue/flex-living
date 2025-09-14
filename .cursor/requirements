@@ -1,0 +1,65 @@
+## Functional Requirements
+
+### 1 Backend: Hostaway integration & API
+
+* **Endpoint:** `GET /api/reviews/hostaway` — fetches and returns normalized review data for use by the frontend. This route **must** be implemented and return structured, usable data.&#x20;
+* **Mocking:** Since sandbox has no reviews, use the provided JSON mock to simulate review responses; ensure the server can switch to real sandbox credentials later.&#x20;
+* **Normalization rules:**
+
+  * Normalize review source fields into a common schema: `id`, `listingId` / `listingName`, `type` (guest-to-host | host-to-guest | other), `status`, `rating` (overall), `categories` (array of `{category, rating}`), `publicReview` (text), `channel` (Hostaway / Google / other), `submittedAt` (ISO 8601 UTC), `guestName`. Use consistent date/time formatting and timezone (ISO 8601). Example Hostaway response shown in the assessment will be an input example.&#x20;
+  * If a review lacks an overall numeric rating, derive a composite score from category ratings where appropriate.
+* **Filtering / Pagination:** Backend must support query params for timezone-agnostic filtering and pagination (e.g., `?listingId=...&from=YYYY-MM-DD&to=YYYY-MM-DD&page=1&perPage=25&minRating=...&channel=...`).
+* **Approval toggles:** Expose an endpoint to toggle `approvedForPublic` for any review (e.g., `POST /api/reviews/{id}/approve` with `{approved: true|false}`). Persist this state (DB or file store for prototype).
+* **Security:** Basic auth or token-based protection for manager routes in the prototype; secure any API keys in env vars during setup. (Assessment includes sandbox credentials — store these in config/env rather than code.)&#x20;
+
+Sample json returned from hostaway endpoint
+```json
+{
+    "status": "success",
+    "result": [
+        {
+            "id": 7453,
+            "type": "host-to-guest",
+            "status": "published",
+            "rating": null,
+            "publicReview": "Shane and family are wonderful! Would definitely host again :)",
+            "reviewCategory": [
+                {
+                    "category": "cleanliness",
+                    "rating": 7
+                },
+                {
+                    "category": "communication",
+                    "rating": 10
+                },
+                {
+                    "category": "respect_house_rules",
+                    "rating": 5
+                }
+            ],
+            "submittedAt": "2020-08-21 22:45:14",
+            "guestName": "Shane Finkelstein",
+            "listingName": "2B N1 A - 29 Shoreditch Heights"
+        }
+    ]
+}
+```
+
+### 2 Frontend: Manager Dashboard
+
+* **Overview page:** show per-property aggregated metrics (avg rating, review counts, latest reviews in last 30/90/365 days).
+* **Review list view:** table/cards with: guestName, listingName, channel, rating(s), submittedAt, snippet of publicReview, review type, categories, approval status.
+* **Filters & sorting:** by rating, category (cleanliness, communication, etc.), channel, time range, listing, and review type.
+* **Detail view / moderator panel:** view full review, category breakdown, ability to mark approve/reject, add internal notes, tag for follow-up.
+* **Trend detection UI:** simple charts or sparklines highlighting changes in average rating and category-level patterns (e.g., cleanliness complaints rising).
+* **Select for public website:** explicit toggle/checkbox per review to include on property page; only reviews with this toggled are exposed to the public display endpoint.
+* **UX expectations:** clean, modern, mobile-responsive layout; think like a product manager — prioritize quick triage (at-a-glance signals) and easy approval.
+
+### 3 Review Display Page (Public property)
+
+* Integrate a reviews section into the existing property detail template. The section will fetch only `approved` reviews for that listing and render them in the Flex Living style.&#x20;
+* Reviews must include guest name (or anonymized label), rating, date, and review text. If category breakdown exists, optionally show badges/scores for categories.
+
+### 4.4 Google Reviews (exploration)
+
+* Investigate whether Google Places / Reviews can be queried for properties (Places API). Document rate limits, required permissions, and any business verification steps. If feasible within scope, implement read-only fetch of Google reviews into the same normalized format and mark `channel: google`. Otherwise, document why not and propose next steps.&#x20;
