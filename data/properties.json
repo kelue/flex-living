@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "name": "Beautiful Pimlico Flat",
+    "category": "Apartment",
+    "channel": "Airbnb",
+    "isActive": true,
+    "createdAt": "2025-09-16T23:53:56.400Z"
+  },
+  {
+    "id": 2,
+    "name": "Cozy Westminster Studio",
+    "category": "Studio",
+    "channel": "Booking.com",
+    "isActive": true,
+    "createdAt": "2025-09-16T23:53:56.400Z"
+  },
+  {
+    "id": 3,
+    "name": "Luxury Kensington Suite",
+    "category": "Suite",
+    "channel": "Direct",
+    "isActive": true,
+    "createdAt": "2025-09-16T23:53:56.400Z"
+  },
+  {
+    "id": 4,
+    "name": "Modern Chelsea Apartment",
+    "category": "Apartment",
+    "channel": "Direct",
+    "isActive": true,
+    "createdAt": "2025-09-16T23:53:56.400Z"
+  },
+  {
+    "id": 5,
+    "name": "Olegra Property",
+    "category": "Studio",
+    "channel": "Airbnb",
+    "isActive": true,
+    "createdAt": "2025-09-16T23:54:49.241Z"
+  }
+]

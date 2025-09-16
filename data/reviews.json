@@ -1,5 +1,6 @@
 [
   {
+    "channel": "Direct",
     "id": 1,
     "property": "Beautiful Pimlico Flat",
     "guest": "Sarah Johnson",
@@ -10,33 +11,36 @@
     "category": "Apartment"
   },
   {
+    "channel": "Direct",
     "id": 2,
     "property": "Cozy Westminster Studio",
     "guest": "Mike Chen",
     "rating": 4,
     "date": "2025-09-08",
     "comment": "Great location, minor issues with heating but overall good experience.",
-    "isPublic": false,
+    "isPublic": true,
     "category": "Studio"
   },
   {
+    "channel": "Direct",
     "id": 3,
     "property": "Luxury Kensington Suite",
     "guest": "Emma Wilson",
     "rating": 3,
     "date": "2025-09-05",
     "comment": "Nice place but quite noisy at night. Could use better soundproofing.",
-    "isPublic": false,
+    "isPublic": true,
     "category": "Suite"
   },
   {
+    "channel": "Direct",
     "id": 4,
     "property": "Modern Chelsea Apartment",
     "guest": "David Brown",
     "rating": 5,
     "date": "2025-09-03",
     "comment": "Exceptional service and beautiful apartment. Highly recommend!",
-    "isPublic": false,
+    "isPublic": true,
     "category": "Apartment"
   }
 ]

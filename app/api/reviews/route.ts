@@ -26,6 +26,7 @@ async function initializeReviews() {
       comment: "Amazing stay! The apartment was spotless and exactly as described.",
       isPublic: true,
       category: "Apartment",
+      channel: "Airbnb",
     },
     {
       id: 2,
@@ -36,6 +37,7 @@ async function initializeReviews() {
       comment: "Great location, minor issues with heating but overall good experience.",
       isPublic: false,
       category: "Studio",
+      channel: "Booking.com",
     },
     {
       id: 3,
@@ -46,6 +48,7 @@ async function initializeReviews() {
       comment: "Nice place but quite noisy at night. Could use better soundproofing.",
       isPublic: false,
       category: "Suite",
+      channel: "Direct",
     },
     {
       id: 4,
@@ -56,6 +59,7 @@ async function initializeReviews() {
       comment: "Exceptional service and beautiful apartment. Highly recommend!",
       isPublic: true,
       category: "Apartment",
+      channel: "Direct",
     },
   ]
 
@@ -71,7 +75,11 @@ export async function GET() {
   try {
     await initializeReviews()
     const data = await fs.readFile(REVIEWS_FILE, "utf8")
-    const reviews = JSON.parse(data)
+    const reviews = JSON.parse(data).map((r: any) => ({
+      channel: "Direct",
+      ...r,
+      channel: r.channel || r.source || "Direct",
+    }))
     return NextResponse.json(reviews)
   } catch (error) {
     console.error("Error reading reviews:", error)

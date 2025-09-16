@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -76,47 +76,43 @@ const categoryData = [
   { name: "Communication", value: 4.4, color: "#f59e0b" },
 ]
 
-const recentReviews = [
-  {
-    id: 1,
-    property: "Beautiful Pimlico Flat",
-    guest: "Sarah Johnson",
-    rating: 5,
-    date: "2025-09-10",
-    comment: "Amazing stay! The apartment was spotless and exactly as described.",
-    isPublic: true,
-    category: "Apartment",
-  },
-  {
-    id: 2,
-    property: "Cozy Westminster Studio",
-    guest: "Mike Chen",
-    rating: 4,
-    date: "2025-09-08",
-    comment: "Great location, minor issues with heating but overall good experience.",
-    isPublic: false,
-    category: "Studio",
-  },
-  {
-    id: 3,
-    property: "Luxury Kensington Suite",
-    guest: "Emma Wilson",
-    rating: 3,
-    date: "2025-09-05",
-    comment: "Nice place but quite noisy at night. Could use better soundproofing.",
-    isPublic: false,
-    category: "Suite",
-  },
-  {
-    id: 4,
-    property: "Modern Chelsea Apartment",
-    guest: "David Brown",
-    rating: 5,
-    date: "2025-09-03",
-    comment: "Exceptional service and beautiful apartment. Highly recommend!",
-    isPublic: true,
-    category: "Apartment",
-  },
+// Simple stopwords for trends
+const STOPWORDS = new Set([
+  "the",
+  "and",
+  "a",
+  "to",
+  "of",
+  "it",
+  "in",
+  "is",
+  "for",
+  "was",
+  "on",
+  "with",
+  "very",
+  "but",
+  "had",
+  "at",
+  "overall",
+  "as",
+])
+const ISSUE_KEYWORDS = [
+  "noise",
+  "noisy",
+  "dirty",
+  "clean",
+  "heating",
+  "cold",
+  "smell",
+  "broken",
+  "delay",
+  "wifi",
+  "internet",
+  "bed",
+  "mattress",
+  "shower",
+  "water",
 ]
 
 export function AdminDashboard() {
@@ -127,9 +123,15 @@ export function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("")
   const [reviews, setReviews] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [properties, setProperties] = useState<any[]>([])
+  const [selectedChannel, setSelectedChannel] = useState("all")
+  const [sortBy, setSortBy] = useState("date_desc")
+  const [addingProperty, setAddingProperty] = useState(false)
+  const [newProperty, setNewProperty] = useState({ name: "", category: "Apartment", channel: "Direct" })
 
   useEffect(() => {
     loadReviews()
+    loadProperties()
   }, [])
 
   const loadReviews = async () => {
@@ -143,6 +145,18 @@ export function AdminDashboard() {
       console.error("Failed to load reviews:", error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadProperties = async () => {
+    try {
+      const response = await fetch("/api/properties")
+      if (response.ok) {
+        const data = await response.json()
+        setProperties(data)
+      }
+    } catch (error) {
+      console.error("Failed to load properties:", error)
     }
   }
 
@@ -167,16 +181,117 @@ export function AdminDashboard() {
     }
   }
 
-  const filteredReviews = reviews.filter((review) => {
-    const matchesSearch =
-      review.guest.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.property.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      review.comment.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesRating = selectedRating === "all" || review.rating.toString() === selectedRating
-    const matchesCategory = selectedCategory === "all" || review.category === selectedCategory
+  const timeframeBoundary = useMemo(() => {
+    const now = new Date()
+    const boundary = new Date(now)
+    if (selectedTimeframe === "1month") boundary.setMonth(boundary.getMonth() - 1)
+    if (selectedTimeframe === "3months") boundary.setMonth(boundary.getMonth() - 3)
+    if (selectedTimeframe === "6months") boundary.setMonth(boundary.getMonth() - 6)
+    if (selectedTimeframe === "1year") boundary.setFullYear(boundary.getFullYear() - 1)
+    return boundary
+  }, [selectedTimeframe])
 
-    return matchesSearch && matchesRating && matchesCategory
-  })
+  const filteredReviews = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase()
+    const result = reviews.filter((review) => {
+      const matchesSearch =
+        review.guest.toLowerCase().includes(lowerSearch) ||
+        review.property.toLowerCase().includes(lowerSearch) ||
+        review.comment.toLowerCase().includes(lowerSearch)
+      const matchesRating = selectedRating === "all" || review.rating.toString() === selectedRating
+      const matchesCategory = selectedCategory === "all" || review.category === selectedCategory
+      const matchesProperty = selectedProperty === "all" || review.property === selectedProperty
+      const matchesChannel = selectedChannel === "all" || (review.channel || "Direct") === selectedChannel
+      const matchesTime = (() => {
+        try {
+          const d = new Date(review.date)
+          return isNaN(d.getTime()) ? true : d >= timeframeBoundary
+        } catch {
+          return true
+        }
+      })()
+      return (
+        matchesSearch && matchesRating && matchesCategory && matchesProperty && matchesChannel && matchesTime
+      )
+    })
+
+    const sorted = [...result]
+    sorted.sort((a, b) => {
+      if (sortBy === "rating_desc") return b.rating - a.rating
+      if (sortBy === "rating_asc") return a.rating - b.rating
+      if (sortBy === "date_asc") return new Date(a.date).getTime() - new Date(b.date).getTime()
+      return new Date(b.date).getTime() - new Date(a.date).getTime()
+    })
+    return sorted
+  }, [reviews, searchTerm, selectedRating, selectedCategory, selectedProperty, selectedChannel, timeframeBoundary, sortBy])
+
+  const metrics = useMemo(() => {
+    const total = reviews.length
+    const avg = total > 0 ? (reviews.reduce((s, r) => s + (r.rating || 0), 0) / total).toFixed(1) : "0.0"
+    const publicCount = reviews.filter((r) => r.isPublic).length
+    const propsCount = properties.length
+    return { total, avg, publicCount, propsCount }
+  }, [reviews, properties])
+
+  const propertyStats = useMemo(() => {
+    const map: Record<string, { count: number; sum: number; publicCount: number }> = {}
+    for (const r of reviews) {
+      const key = r.property
+      if (!map[key]) map[key] = { count: 0, sum: 0, publicCount: 0 }
+      map[key].count += 1
+      map[key].sum += r.rating || 0
+      if (r.isPublic) map[key].publicCount += 1
+    }
+    return map
+  }, [reviews])
+
+  const trends = useMemo(() => {
+    const freq: Record<string, number> = {}
+    const issueFreq: Record<string, number> = {}
+    for (const r of reviews) {
+      const words = String(r.comment || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter((w) => w && !STOPWORDS.has(w))
+      for (const w of words) {
+        freq[w] = (freq[w] || 0) + 1
+      }
+      for (const k of ISSUE_KEYWORDS) {
+        if (String(r.comment || "").toLowerCase().includes(k)) {
+          issueFreq[k] = (issueFreq[k] || 0) + 1
+        }
+      }
+    }
+    const topKeywords = Object.entries(freq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+    const topIssues = Object.entries(issueFreq)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+    return { topKeywords, topIssues }
+  }, [reviews])
+
+  const addProperty = async () => {
+    if (!newProperty.name.trim()) return
+    setAddingProperty(true)
+    try {
+      const res = await fetch("/api/properties", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newProperty),
+      })
+      if (res.ok) {
+        const created = await res.json()
+        setProperties((p) => [...p, created])
+        setNewProperty({ name: "", category: "Apartment", channel: "Direct" })
+      }
+    } catch (e) {
+      console.error("Failed to add property", e)
+    } finally {
+      setAddingProperty(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -239,6 +354,7 @@ export function AdminDashboard() {
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="reviews">Review Management</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="properties">Properties</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -250,9 +366,9 @@ export function AdminDashboard() {
                     <IconMessageSquare />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">328</div>
+                    <div className="text-2xl font-bold">{metrics.total}</div>
                     <p className="text-xs text-muted-foreground">
-                      <span className="text-green-600">+12%</span> from last month
+                      Snapshot from loaded data
                     </p>
                   </CardContent>
                 </Card>
@@ -263,9 +379,9 @@ export function AdminDashboard() {
                     <IconStar />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">4.3</div>
+                    <div className="text-2xl font-bold">{metrics.avg}</div>
                     <p className="text-xs text-muted-foreground">
-                      <span className="text-green-600">+0.2</span> from last month
+                      Across all properties
                     </p>
                   </CardContent>
                 </Card>
@@ -276,8 +392,10 @@ export function AdminDashboard() {
                     <IconEye />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">245</div>
-                    <p className="text-xs text-muted-foreground">75% of total reviews</p>
+                    <div className="text-2xl font-bold">{metrics.publicCount}</div>
+                    <p className="text-xs text-muted-foreground">
+                      {metrics.total > 0 ? Math.round((metrics.publicCount / metrics.total) * 100) : 0}% of total reviews
+                    </p>
                   </CardContent>
                 </Card>
 
@@ -287,7 +405,7 @@ export function AdminDashboard() {
                     <IconBuilding />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">24</div>
+                    <div className="text-2xl font-bold">{metrics.propsCount}</div>
                     <p className="text-xs text-muted-foreground">Active listings</p>
                   </CardContent>
                 </Card>
@@ -355,7 +473,7 @@ export function AdminDashboard() {
                   <CardDescription>Filter and sort reviews by various criteria</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                     <div className="relative">
                       <div className="absolute left-3 top-3">
                         <IconSearch />
@@ -367,6 +485,20 @@ export function AdminDashboard() {
                         className="pl-10"
                       />
                     </div>
+
+                    <Select value={selectedProperty} onValueChange={setSelectedProperty}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filter by property" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Properties</SelectItem>
+                        {properties.map((p) => (
+                          <SelectItem key={p.id} value={p.name}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
 
                     <Select value={selectedRating} onValueChange={setSelectedRating}>
                       <SelectTrigger>
@@ -394,6 +526,18 @@ export function AdminDashboard() {
                       </SelectContent>
                     </Select>
 
+                    <Select value={selectedChannel} onValueChange={setSelectedChannel}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Channel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Channels</SelectItem>
+                        <SelectItem value="Airbnb">Airbnb</SelectItem>
+                        <SelectItem value="Booking.com">Booking.com</SelectItem>
+                        <SelectItem value="Direct">Direct</SelectItem>
+                      </SelectContent>
+                    </Select>
+
                     <Select value={selectedTimeframe} onValueChange={setSelectedTimeframe}>
                       <SelectTrigger>
                         <SelectValue placeholder="Time period" />
@@ -403,6 +547,18 @@ export function AdminDashboard() {
                         <SelectItem value="3months">Last 3 Months</SelectItem>
                         <SelectItem value="6months">Last 6 Months</SelectItem>
                         <SelectItem value="1year">Last Year</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date_desc">Newest</SelectItem>
+                        <SelectItem value="date_asc">Oldest</SelectItem>
+                        <SelectItem value="rating_desc">Rating: High to Low</SelectItem>
+                        <SelectItem value="rating_asc">Rating: Low to High</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -419,6 +575,7 @@ export function AdminDashboard() {
                           <div className="flex items-center space-x-2 mb-2">
                             <h3 className="font-semibold">{review.property}</h3>
                             <Badge variant="outline">{review.category}</Badge>
+                            <Badge variant="secondary">{review.channel || "Direct"}</Badge>
                             <div className="flex items-center">
                               {[...Array(5)].map((_, i) => (
                                 <IconStar key={i} filled={i < review.rating} />
@@ -466,6 +623,137 @@ export function AdminDashboard() {
                   <CardContent>
                     <div className="h-64 flex items-center justify-center text-muted-foreground">
                       🥧 Rating distribution chart would appear here
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Trends & Recurring Issues</CardTitle>
+                  <CardDescription>Top keywords and potential issues mentioned in reviews</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-medium mb-2">Top Keywords</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {trends.topKeywords.length === 0 && (
+                          <span className="text-sm text-muted-foreground">No data</span>
+                        )}
+                        {trends.topKeywords.map(([word, count]) => (
+                          <Badge key={word} variant="outline">
+                            {word} · {count as number}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Recurring Issues</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {trends.topIssues.length === 0 && (
+                          <span className="text-sm text-muted-foreground">No issues detected</span>
+                        )}
+                        {trends.topIssues.map(([word, count]) => (
+                          <Badge key={word}>
+                            {word} · {count as number}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="properties" className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Card className="lg:col-span-2">
+                  <CardHeader>
+                    <CardTitle>Properties</CardTitle>
+                    <CardDescription>Per-property performance at a glance</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {properties.map((p) => {
+                        const stats = propertyStats[p.name] || { count: 0, sum: 0, publicCount: 0 }
+                        const avg = stats.count > 0 ? (stats.sum / stats.count).toFixed(1) : "-"
+                        const publicPct = stats.count > 0 ? Math.round((stats.publicCount / stats.count) * 100) : 0
+                        return (
+                          <div key={p.id} className="border rounded-md p-4 flex items-center justify-between">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold">{p.name}</span>
+                                <Badge variant="outline">{p.category}</Badge>
+                                <Badge variant="secondary">{p.channel}</Badge>
+                              </div>
+                              <div className="text-xs text-muted-foreground mt-1">Added {new Date(p.createdAt).toLocaleDateString()}</div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                              <div className="text-center">
+                                <div className="text-xl font-semibold">{avg}</div>
+                                <div className="text-xs text-muted-foreground">Avg rating</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-semibold">{stats.count}</div>
+                                <div className="text-xs text-muted-foreground">Reviews</div>
+                              </div>
+                              <div className="text-center">
+                                <div className="text-xl font-semibold">{publicPct}%</div>
+                                <div className="text-xs text-muted-foreground">Public</div>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {properties.length === 0 && (
+                        <div className="text-sm text-muted-foreground">No properties yet</div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Add New Property</CardTitle>
+                    <CardDescription>Create a listing to start tracking performance</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <Input
+                        placeholder="Property name"
+                        value={newProperty.name}
+                        onChange={(e) => setNewProperty((s) => ({ ...s, name: e.target.value }))}
+                      />
+                      <Select
+                        value={newProperty.category}
+                        onValueChange={(v) => setNewProperty((s) => ({ ...s, category: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Apartment">Apartment</SelectItem>
+                          <SelectItem value="Studio">Studio</SelectItem>
+                          <SelectItem value="Suite">Suite</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={newProperty.channel}
+                        onValueChange={(v) => setNewProperty((s) => ({ ...s, channel: v }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Channel" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Airbnb">Airbnb</SelectItem>
+                          <SelectItem value="Booking.com">Booking.com</SelectItem>
+                          <SelectItem value="Direct">Direct</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Button disabled={addingProperty || !newProperty.name.trim()} onClick={addProperty}>
+                        {addingProperty ? "Adding..." : "Add Property"}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
