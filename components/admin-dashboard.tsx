@@ -9,6 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Label } from "@/components/ui/label"
+import { Wifi, Globe, Home as HomeIcon, Package, Bath, ChefHat } from "lucide-react"
 
 const IconSearch = () => (
   <div className="w-4 h-4 border border-current rounded-full relative">
@@ -116,6 +120,15 @@ const ISSUE_KEYWORDS = [
   "water",
 ]
 
+const AMENITY_OPTIONS = [
+  { key: "wifi", label: "Free WiFi", Icon: Wifi },
+  { key: "internet", label: "Internet", Icon: Globe },
+  { key: "home", label: "Private living room", Icon: HomeIcon },
+  { key: "essentials", label: "Essentials", Icon: Package },
+  { key: "bath", label: "Towels", Icon: Bath },
+  { key: "kitchen", label: "Kitchen", Icon: ChefHat },
+]
+
 type AdminView = "overview" | "reviews" | "analytics" | "properties"
 
 export function AdminDashboard({ activeView = "overview" }: { activeView?: AdminView }) {
@@ -130,7 +143,25 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
   const [selectedChannel, setSelectedChannel] = useState("all")
   const [sortBy, setSortBy] = useState("date_desc")
   const [addingProperty, setAddingProperty] = useState(false)
-  const [newProperty, setNewProperty] = useState({ name: "", category: "Apartment", channel: "Direct" })
+  const [newProperty, setNewProperty] = useState({
+    name: "",
+    category: "Apartment",
+    channel: "Direct",
+    guests: "",
+    bedrooms: "",
+    bathrooms: "",
+    description: "",
+    address: "",
+    mapImage: "",
+    checkIn: "15:00",
+    checkOut: "10:00",
+    petsAllowed: false,
+    smokingAllowed: false,
+    cancellationPolicy: "",
+  })
+  const [amenityKeys, setAmenityKeys] = useState<string[]>([])
+  const [galleryText, setGalleryText] = useState("")
+  const [editingPropertyId, setEditingPropertyId] = useState<number | null>(null)
 
   useEffect(() => {
     loadReviews()
@@ -279,20 +310,131 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
     if (!newProperty.name.trim()) return
     setAddingProperty(true)
     try {
-      const res = await fetch("/api/properties", {
-        method: "POST",
+      const amenitiesPayload = amenityKeys.map((key) => {
+        const found = AMENITY_OPTIONS.find((o) => o.key === key)
+        return { icon: key, label: found?.label || key }
+      })
+      const gallery = galleryText
+        .split(/[\n,]/)
+        .map((s) => s.trim())
+        .filter(Boolean)
+      const payload = {
+        name: newProperty.name,
+        category: newProperty.category,
+        channel: newProperty.channel,
+        guests: Number(newProperty.guests) || 0,
+        bedrooms: Number(newProperty.bedrooms) || 0,
+        bathrooms: Number(newProperty.bathrooms) || 0,
+        description: newProperty.description,
+        amenities: amenitiesPayload,
+        gallery,
+        houseRules: {
+          checkIn: newProperty.checkIn,
+          checkOut: newProperty.checkOut,
+          petsAllowed: !!newProperty.petsAllowed,
+          smokingAllowed: !!newProperty.smokingAllowed,
+        },
+        cancellationPolicy: newProperty.cancellationPolicy,
+        address: newProperty.address,
+        mapImage: newProperty.mapImage,
+      }
+      const url = editingPropertyId ? `/api/properties/${editingPropertyId}` : "/api/properties"
+      const method = editingPropertyId ? "PATCH" : "POST"
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newProperty),
+        body: JSON.stringify(payload),
       })
       if (res.ok) {
         const created = await res.json()
-        setProperties((p) => [...p, created])
-        setNewProperty({ name: "", category: "Apartment", channel: "Direct" })
+        setProperties((prev) => {
+          if (editingPropertyId) {
+            return prev.map((p) => (p.id === editingPropertyId ? created : p))
+          }
+          return [...prev, created]
+        })
+        setNewProperty({
+          name: "",
+          category: "Apartment",
+          channel: "Direct",
+          guests: "",
+          bedrooms: "",
+          bathrooms: "",
+          description: "",
+          address: "",
+          mapImage: "",
+          checkIn: "15:00",
+          checkOut: "10:00",
+          petsAllowed: false,
+          smokingAllowed: false,
+          cancellationPolicy: "",
+        })
+        setAmenityKeys([])
+        setGalleryText("")
+        setEditingPropertyId(null)
       }
     } catch (e) {
       console.error("Failed to add property", e)
     } finally {
       setAddingProperty(false)
+    }
+  }
+
+  const startEditProperty = (p: any) => {
+    setEditingPropertyId(p.id)
+    setNewProperty({
+      name: p.name || "",
+      category: p.category || "Apartment",
+      channel: p.channel || "Direct",
+      guests: String(p.guests ?? ""),
+      bedrooms: String(p.bedrooms ?? ""),
+      bathrooms: String(p.bathrooms ?? ""),
+      description: p.description || "",
+      address: p.address || "",
+      mapImage: p.mapImage || "",
+      checkIn: p.houseRules?.checkIn || "15:00",
+      checkOut: p.houseRules?.checkOut || "10:00",
+      petsAllowed: !!p.houseRules?.petsAllowed,
+      smokingAllowed: !!p.houseRules?.smokingAllowed,
+      cancellationPolicy: p.cancellationPolicy || "",
+    })
+    setAmenityKeys(Array.isArray(p.amenities) ? p.amenities.map((a: any) => a.icon).filter(Boolean) : [])
+    setGalleryText(Array.isArray(p.gallery) ? p.gallery.join("\n") : "")
+  }
+
+  const cancelEdit = () => {
+    setEditingPropertyId(null)
+    setNewProperty({
+      name: "",
+      category: "Apartment",
+      channel: "Direct",
+      guests: "",
+      bedrooms: "",
+      bathrooms: "",
+      description: "",
+      address: "",
+      mapImage: "",
+      checkIn: "15:00",
+      checkOut: "10:00",
+      petsAllowed: false,
+      smokingAllowed: false,
+      cancellationPolicy: "",
+    })
+    setAmenityKeys([])
+    setGalleryText("")
+  }
+
+  const deleteProperty = async (id: number) => {
+    const ok = typeof window !== "undefined" ? window.confirm("Delete this property?") : true
+    if (!ok) return
+    try {
+      const res = await fetch(`/api/properties/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        setProperties((prev) => prev.filter((p) => p.id !== id))
+        if (editingPropertyId === id) cancelEdit()
+      }
+    } catch (e) {
+      console.error("Failed to delete property", e)
     }
   }
 
@@ -707,6 +849,10 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
                                 <div className="text-xl font-semibold">{publicPct}%</div>
                                 <div className="text-xs text-muted-foreground">Public</div>
                               </div>
+                              <div className="flex items-center gap-2">
+                                <Button variant="outline" onClick={() => startEditProperty(p)}>Edit</Button>
+                                <Button variant="destructive" onClick={() => deleteProperty(p.id)}>Delete</Button>
+                              </div>
                             </div>
                           </div>
                         )
@@ -720,45 +866,195 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Add New Property</CardTitle>
-                    <CardDescription>Create a listing to start tracking performance</CardDescription>
+                    <CardTitle>{editingPropertyId ? "Edit Property" : "Add New Property"}</CardTitle>
+                    <CardDescription>{editingPropertyId ? "Update property details" : "Create a listing to start tracking performance"}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
+                    <div className="space-y-4">
                       <Input
                         placeholder="Property name"
                         value={newProperty.name}
                         onChange={(e) => setNewProperty((s) => ({ ...s, name: e.target.value }))}
                       />
-                      <Select
-                        value={newProperty.category}
-                        onValueChange={(v) => setNewProperty((s) => ({ ...s, category: v }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Apartment">Apartment</SelectItem>
-                          <SelectItem value="Studio">Studio</SelectItem>
-                          <SelectItem value="Suite">Suite</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        value={newProperty.channel}
-                        onValueChange={(v) => setNewProperty((s) => ({ ...s, channel: v }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Channel" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Airbnb">Airbnb</SelectItem>
-                          <SelectItem value="Booking.com">Booking.com</SelectItem>
-                          <SelectItem value="Direct">Direct</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Button disabled={addingProperty || !newProperty.name.trim()} onClick={addProperty}>
-                        {addingProperty ? "Adding..." : "Add Property"}
-                      </Button>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Category</Label>
+                          <Select
+                            value={newProperty.category}
+                            onValueChange={(v) => setNewProperty((s) => ({ ...s, category: v }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Apartment">Apartment</SelectItem>
+                              <SelectItem value="Studio">Studio</SelectItem>
+                              <SelectItem value="Suite">Suite</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Channel</Label>
+                          <Select
+                            value={newProperty.channel}
+                            onValueChange={(v) => setNewProperty((s) => ({ ...s, channel: v }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Channel" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Airbnb">Airbnb</SelectItem>
+                              <SelectItem value="Booking.com">Booking.com</SelectItem>
+                              <SelectItem value="Direct">Direct</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Guests</Label>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="e.g. 4"
+                            value={newProperty.guests}
+                            onChange={(e) => setNewProperty((s) => ({ ...s, guests: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label>Bedrooms</Label>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="e.g. 1"
+                            value={newProperty.bedrooms}
+                            onChange={(e) => setNewProperty((s) => ({ ...s, bedrooms: e.target.value }))}
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>Bathrooms</Label>
+                          <Input
+                            type="number"
+                            inputMode="numeric"
+                            placeholder="e.g. 1"
+                            value={newProperty.bathrooms}
+                            onChange={(e) => setNewProperty((s) => ({ ...s, bathrooms: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Description</Label>
+                        <Textarea
+                          placeholder="Short description"
+                          value={newProperty.description}
+                          onChange={(e) => setNewProperty((s) => ({ ...s, description: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Amenities</Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {AMENITY_OPTIONS.map((opt) => {
+                            const checked = amenityKeys.includes(opt.key)
+                            return (
+                              <label key={opt.key} className="flex items-center gap-2 rounded-md border p-2 cursor-pointer">
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={(v) => {
+                                    setAmenityKeys((prev) => (v ? [...prev, opt.key] : prev.filter((k) => k !== opt.key)))
+                                  }}
+                                />
+                                <opt.Icon className="w-4 h-4 text-muted-foreground" />
+                                <span className="text-sm">{opt.label}</span>
+                              </label>
+                            )
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Gallery image URLs (one per line or comma-separated)</Label>
+                        <Textarea
+                          placeholder="https://.../image1.jpg\nhttps://.../image2.jpg"
+                          value={galleryText}
+                          onChange={(e) => setGalleryText(e.target.value)}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Address</Label>
+                        <Input
+                          placeholder="e.g. Pimlico, London, UK"
+                          value={newProperty.address}
+                          onChange={(e) => setNewProperty((s) => ({ ...s, address: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Map image URL</Label>
+                        <Input
+                          placeholder="/london-map.jpg or https://..."
+                          value={newProperty.mapImage}
+                          onChange={(e) => setNewProperty((s) => ({ ...s, mapImage: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>House Rules</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label>Check-in</Label>
+                            <Input
+                              placeholder="15:00"
+                              value={newProperty.checkIn}
+                              onChange={(e) => setNewProperty((s) => ({ ...s, checkIn: e.target.value }))}
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label>Check-out</Label>
+                            <Input
+                              placeholder="10:00"
+                              value={newProperty.checkOut}
+                              onChange={(e) => setNewProperty((s) => ({ ...s, checkOut: e.target.value }))}
+                            />
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-6">
+                          <label className="flex items-center gap-2">
+                            <Switch
+                              checked={!!newProperty.petsAllowed}
+                              onCheckedChange={(v) => setNewProperty((s) => ({ ...s, petsAllowed: !!v }))}
+                            />
+                            <span className="text-sm">Pets allowed</span>
+                          </label>
+                          <label className="flex items-center gap-2">
+                            <Switch
+                              checked={!!newProperty.smokingAllowed}
+                              onCheckedChange={(v) => setNewProperty((s) => ({ ...s, smokingAllowed: !!v }))}
+                            />
+                            <span className="text-sm">Smoking allowed</span>
+                          </label>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label>Cancellation Policy</Label>
+                        <Textarea
+                          placeholder="e.g. 100% refund up to 14 days before arrival"
+                          value={newProperty.cancellationPolicy}
+                          onChange={(e) => setNewProperty((s) => ({ ...s, cancellationPolicy: e.target.value }))}
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button disabled={addingProperty || !newProperty.name.trim()} onClick={addProperty}>
+                          {addingProperty ? (editingPropertyId ? "Saving..." : "Adding...") : editingPropertyId ? "Save Changes" : "Add Property"}
+                        </Button>
+                        {editingPropertyId && (
+                          <Button variant="outline" onClick={cancelEdit}>Cancel</Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

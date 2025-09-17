@@ -37,6 +37,38 @@
     "category": "Studio",
     "channel": "Airbnb",
     "isActive": true,
-    "createdAt": "2025-09-16T23:54:49.241Z"
+    "createdAt": "2025-09-16T23:54:49.241Z",
+    "guests": 0,
+    "bedrooms": 0,
+    "bathrooms": 0,
+    "description": "",
+    "amenities": [
+      {
+        "icon": "wifi",
+        "label": "Free WiFi"
+      },
+      {
+        "icon": "internet",
+        "label": "Internet"
+      },
+      {
+        "icon": "home",
+        "label": "Private living room"
+      },
+      {
+        "icon": "essentials",
+        "label": "Essentials"
+      }
+    ],
+    "gallery": [],
+    "houseRules": {
+      "checkIn": "15:00",
+      "checkOut": "10:00",
+      "petsAllowed": false,
+      "smokingAllowed": false
+    },
+    "cancellationPolicy": "",
+    "address": "",
+    "mapImage": ""
   }
 ]
