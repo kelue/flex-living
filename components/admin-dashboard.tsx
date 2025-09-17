@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Tabs, TabsContent } from "@/components/ui/tabs"
 
 const IconSearch = () => (
   <div className="w-4 h-4 border border-current rounded-full relative">
@@ -115,7 +116,9 @@ const ISSUE_KEYWORDS = [
   "water",
 ]
 
-export function AdminDashboard() {
+type AdminView = "overview" | "reviews" | "analytics" | "properties"
+
+export function AdminDashboard({ activeView = "overview" }: { activeView?: AdminView }) {
   const [selectedProperty, setSelectedProperty] = useState("all")
   const [selectedRating, setSelectedRating] = useState("all")
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -328,34 +331,36 @@ export function AdminDashboard() {
         {/* Sidebar */}
         <aside className="w-64 border-r border-border bg-sidebar">
           <nav className="p-4 space-y-2">
-            <Button variant="ghost" className="w-full justify-start">
-              <IconTrendingUp />
-              <span className="ml-2">Analytics</span>
+            <Button asChild variant="ghost" className={`w-full justify-start ${activeView === "overview" ? "bg-accent" : ""}`}>
+              <Link href="/admin/overview">
+                <IconBuilding />
+                <span className="ml-2">Overview</span>
+              </Link>
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              <IconMessageSquare />
-              <span className="ml-2">Reviews</span>
+            <Button asChild variant="ghost" className={`w-full justify-start ${activeView === "reviews" ? "bg-accent" : ""}`}>
+              <Link href="/admin/reviews">
+                <IconMessageSquare />
+                <span className="ml-2">Review Management</span>
+              </Link>
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              <IconEye />
-              <span className="ml-2">Display Control</span>
+            <Button asChild variant="ghost" className={`w-full justify-start ${activeView === "analytics" ? "bg-accent" : ""}`}>
+              <Link href="/admin/analytics">
+                <IconTrendingUp />
+                <span className="ml-2">Analytics</span>
+              </Link>
             </Button>
-            <Button variant="ghost" className="w-full justify-start">
-              <IconUsers />
-              <span className="ml-2">Properties</span>
+            <Button asChild variant="ghost" className={`w-full justify-start ${activeView === "properties" ? "bg-accent" : ""}`}>
+              <Link href="/admin/properties">
+                <IconUsers />
+                <span className="ml-2">Property Management</span>
+              </Link>
             </Button>
           </nav>
         </aside>
 
         {/* Main Content */}
         <main className="flex-1 p-6">
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="reviews">Review Management</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-              <TabsTrigger value="properties">Properties</TabsTrigger>
-            </TabsList>
+          <Tabs value={activeView} className="space-y-6">
 
             <TabsContent value="overview" className="space-y-6">
               {/* Key Metrics */}
