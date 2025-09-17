@@ -228,12 +228,12 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
   const filteredReviews = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase()
     const result = reviews.filter((review) => {
-      const matchesSearch =
+    const matchesSearch =
         review.guest.toLowerCase().includes(lowerSearch) ||
         review.property.toLowerCase().includes(lowerSearch) ||
         review.comment.toLowerCase().includes(lowerSearch)
-      const matchesRating = selectedRating === "all" || review.rating.toString() === selectedRating
-      const matchesCategory = selectedCategory === "all" || review.category === selectedCategory
+    const matchesRating = selectedRating === "all" || review.rating.toString() === selectedRating
+    const matchesCategory = selectedCategory === "all" || review.category === selectedCategory
       const matchesProperty = selectedProperty === "all" || review.property === selectedProperty
       const matchesChannel = selectedChannel === "all" || (review.channel || "Direct") === selectedChannel
       const matchesTime = (() => {
@@ -481,7 +481,7 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
             </Button>
             <Button asChild variant="ghost" className={`w-full justify-start ${activeView === "reviews" ? "bg-accent" : ""}`}>
               <Link href="/admin/reviews">
-                <IconMessageSquare />
+              <IconMessageSquare />
                 <span className="ml-2">Review Management</span>
               </Link>
             </Button>
@@ -493,7 +493,7 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
             </Button>
             <Button asChild variant="ghost" className={`w-full justify-start ${activeView === "properties" ? "bg-accent" : ""}`}>
               <Link href="/admin/properties">
-                <IconUsers />
+              <IconUsers />
                 <span className="ml-2">Property Management</span>
               </Link>
             </Button>

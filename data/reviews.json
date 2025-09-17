@@ -40,7 +40,7 @@
     "rating": 5,
     "date": "2025-09-03",
     "comment": "Exceptional service and beautiful apartment. Highly recommend!",
-    "isPublic": true,
+    "isPublic": false,
     "category": "Apartment"
   }
 ]

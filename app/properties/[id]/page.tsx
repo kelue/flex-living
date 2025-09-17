@@ -16,6 +16,20 @@ async function getProperty(id: number) {
   }
 }
 
+async function getReviewsForProperty(name: string) {
+  const file = path.join(process.cwd(), "data", "reviews.json")
+  try {
+    const content = await fs.readFile(file, "utf8")
+    const list = JSON.parse(content)
+    const propertyReviews = list.filter((r: any) => r.property === name)
+    const publicOnes = propertyReviews.filter((r: any) => r.isPublic)
+    const avg = publicOnes.length ? publicOnes.reduce((s: number, r: any) => s + (r.rating || 0), 0) / publicOnes.length : undefined
+    return { total: propertyReviews.length, publicCount: publicOnes.length, avg }
+  } catch {
+    return { total: 0, publicCount: 0, avg: undefined }
+  }
+}
+
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
   const id = Number(params.id)
   const property = await getProperty(id)
@@ -26,6 +40,7 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
       </div>
     )
   }
+  const rev = await getReviewsForProperty(property.name)
   const summary = `${property.category} • ${property.guests || 0} guests • ${property.bedrooms || 0} ${property.bedrooms === 1 ? "bedroom" : "bedrooms"} • ${property.bathrooms || 0} ${property.bathrooms === 1 ? "bath" : "baths"}`
   return (
     <div className="space-y-10 mx-[30px] lg:mx-[10rem]">
@@ -34,7 +49,14 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left side - Details */}
         <div className="lg:col-span-2 space-y-6 mx-[30px] lg:px-[5rem]">
-          <PropertyDetails name={property.name} summary={summary} description={property.description} amenities={property.amenities || []} />
+          <PropertyDetails
+            name={property.name}
+            summary={summary}
+            description={property.description}
+            amenities={property.amenities || []}
+            rating={typeof rev.avg === "number" ? rev.avg : undefined}
+            reviewCount={rev.total}
+          />
         </div>
 
         {/* Right side - Booking Panel and Approved Reviews */}

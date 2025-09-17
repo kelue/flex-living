@@ -29,8 +29,10 @@ export function ApprovedReviews({ propertyName }: { propertyName?: string }) {
         // Filter to only show reviews marked as public/approved in admin dashboard
         let publicReviews = allReviews.filter((review: Review) => review.isPublic)
         if (propertyName) {
-          publicReviews = publicReviews.filter((r: Review) => r.property === propertyName)
+          const target = String(propertyName).toLowerCase().trim()
+          publicReviews = publicReviews.filter((r: Review) => String(r.property).toLowerCase().trim() === target)
         }
+        publicReviews.sort((a: Review, b: Review) => new Date(b.date).getTime() - new Date(a.date).getTime())
         setApprovedReviews(publicReviews)
       }
     } catch (error) {
@@ -68,11 +70,11 @@ export function ApprovedReviews({ propertyName }: { propertyName?: string }) {
       <div className="bg-white border border-gray-200 rounded-lg p-6">
         <div className="flex items-center gap-2 mb-4">
           <h3 className="text-lg font-semibold text-gray-900">Guest Reviews</h3>
-          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Verified</span>
+          <span className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full">No reviews</span>
         </div>
         <div className="text-center py-8">
-          <p className="text-sm text-gray-500">No approved reviews to display</p>
-          <p className="text-xs text-gray-400 mt-1">Reviews will appear here once approved by admin</p>
+          <p className="text-sm text-gray-500">There are no reviews for this property yet.</p>
+          <p className="text-xs text-gray-400 mt-1">Once guests leave feedback and it's approved, reviews will appear here.</p>
         </div>
       </div>
     )

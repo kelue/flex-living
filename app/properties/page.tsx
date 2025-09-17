@@ -13,8 +13,27 @@ async function getProperties() {
   }
 }
 
+async function getPublicAverages() {
+  const file = path.join(process.cwd(), "data", "reviews.json")
+  try {
+    const content = await fs.readFile(file, "utf8")
+    const reviews = JSON.parse(content)
+    const byProp: Record<string, { sum: number; count: number }> = {}
+    for (const r of reviews) {
+      if (!r.isPublic) continue
+      const key = r.property
+      if (!byProp[key]) byProp[key] = { sum: 0, count: 0 }
+      byProp[key].sum += r.rating || 0
+      byProp[key].count += 1
+    }
+    return byProp
+  } catch {
+    return {}
+  }
+}
+
 export default async function PropertiesPage() {
-  const properties = await getProperties()
+  const [properties, averages] = await Promise.all([getProperties(), getPublicAverages()])
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
@@ -35,7 +54,11 @@ export default async function PropertiesPage() {
                 <Badge className="bg-red-500 text-white">All listings</Badge>
               </div>
               <div className="absolute top-3 right-3">
-                <Badge className="bg-teal-700 text-white">{p.rating?.toFixed?.(2) || "4.60"}</Badge>
+                <Badge className="bg-teal-700 text-white">{(() => {
+                  const a = averages[p.name]
+                  if (!a || a.count === 0) return "—"
+                  return (a.sum / a.count).toFixed(2)
+                })()}</Badge>
               </div>
             </div>
             <div className="p-4 space-y-2">

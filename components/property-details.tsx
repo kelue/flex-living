@@ -16,11 +16,15 @@ export function PropertyDetails({
     { label: "Towels" },
     { label: "Kitchen" },
   ] as Amenity[],
+  rating,
+  reviewCount,
 }: {
   name?: string
   summary?: string
   description?: string
   amenities?: Amenity[]
+  rating?: number
+  reviewCount?: number
 }) {
   return (
     <div className="space-y-8">
@@ -32,12 +36,10 @@ export function PropertyDetails({
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold">4.75</span>
+            <span className="font-semibold">{typeof rating === "number" ? rating.toFixed(2) : "—"}</span>
           </div>
           <span className="text-gray-600">•</span>
-          <a href="#" className="text-gray-600 underline hover:text-gray-900">
-            7 reviews
-          </a>
+          <span className="text-gray-600">{typeof reviewCount === "number" ? `${reviewCount} reviews` : "No reviews yet"}</span>
         </div>
 
         <div className="text-gray-700 leading-relaxed">{description}</div>
@@ -68,131 +70,7 @@ export function PropertyDetails({
         </Button>
       </div>
 
-      <div className="border-t pt-8">
-        <div className="flex items-center gap-2 mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Reviews</h2>
-          <div className="flex items-center gap-1">
-            <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold text-lg">4.75</span>
-            <span className="text-gray-600">(7)</span>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {/* Review 1 - Jean-Damien */}
-          <div className="border-b border-gray-200 pb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-none text-gray-300" />
-                <Star className="w-4 h-4 fill-none text-gray-300" />
-                <Star className="w-4 h-4 fill-none text-gray-300" />
-              </div>
-              <span className="font-medium text-gray-900">Jean-Damien</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-gray-500">August 2025</span>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              Positive: Location is central London and next to the subway. Easy to recover the keys from a lock box in
-              the nearby street. Everything listed in the apartment is present. Negative: Unfortunately, the pictures on
-              the website versus the reality made the experience very strange. We did not pay enoug...
-            </p>
-            <Button variant="ghost" className="p-0 h-auto text-gray-900 underline hover:no-underline mt-2">
-              Show more
-            </Button>
-          </div>
-
-          {/* Review 2 - Mariusz */}
-          <div className="border-b border-gray-200 pb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-none text-gray-300" />
-              </div>
-              <span className="font-medium text-gray-900">Mariusz</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-gray-500">August 2025</span>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              Pobyt bardzo udany, zaspokojone oczekiwania, bardzo miłe wspomnienia. Positive: Świetna lokalizacja,
-              blisko do ciekawych obiektów a jak brak sił to metro po drugiej stronie ulicy autobus za rogiem. Sklep
-              kawalek dalej. Cicha okolica. Lokal spełniał moje potrzeby za kwotę jaką przeznaczyłem do...
-            </p>
-            <Button variant="ghost" className="p-0 h-auto text-gray-900 underline hover:no-underline mt-2">
-              Show more
-            </Button>
-          </div>
-
-          {/* Review 3 - Elton */}
-          <div className="border-b border-gray-200 pb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-              </div>
-              <span className="font-medium text-gray-900">Elton</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-gray-500">June 2025</span>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              Si propre, si douillet, si bon Positive: Cette unité a redéfini la propreté et le confort pour nous.
-              L'ambiance était invitante et les petits extras comme les collations et les articles de toilette ont été
-              très appréciés. On sent vraiment que l'hôte se soucie des autres.
-            </p>
-          </div>
-
-          {/* Review 4 - Noelle */}
-          <div className="border-b border-gray-200 pb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-              </div>
-              <span className="font-medium text-gray-900">Noelle</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-gray-500">June 2025</span>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              Une expérience, pas seulement un séjour Positive: Ce n'était pas seulement un endroit où dormir, c'était
-              un des points forts de notre voyage. Les petites attentions et l'atmosphère calme ont laissé une
-              impression durable. Nous le recommanderons à tous ceux que nous connaissons.
-            </p>
-          </div>
-
-          {/* Review 5 - Rosemary */}
-          <div className="pb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex items-center">
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-                <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-              </div>
-              <span className="font-medium text-gray-900">Rosemary</span>
-              <span className="text-gray-500">•</span>
-              <span className="text-gray-500">June 2025</span>
-            </div>
-            <p className="text-gray-700 leading-relaxed">
-              Perfekter Aufenthalt zuhause Positive: Es war gemütlich und perfekt, genau so, wie ich es mag.
-            </p>
-          </div>
-        </div>
-
-        <Button variant="ghost" className="p-0 h-auto text-gray-900 underline hover:no-underline mt-4">
-          Show all 7 reviews
-        </Button>
-      </div>
+      {/* Reviews content is rendered by ApprovedReviews in the right column */}
 
       <div className="border-t pt-8">
         <div className="w-full h-80 bg-gray-200 rounded-lg overflow-hidden relative">

@@ -3,8 +3,7 @@ import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { Analytics } from '@vercel/analytics/next'
 import './globals.css'
-import { Header } from '@/components/header'
-import { Footer } from '@/components/footer'
+import { PublicShell } from '@/components/public-shell'
 
 export const metadata: Metadata = {
   title: 'v0 App',
@@ -20,11 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable}`}>
-        <Header />
-        <main>
+        <PublicShell>
           {children}
-        </main>
-        <Footer />
+        </PublicShell>
         <Analytics />
       </body>
     </html>
