@@ -194,20 +194,30 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
     }
   }
 
-  const togglePublicDisplay = async (reviewId: number) => {
-    const updatedReviews = reviews.map((review) =>
-      review.id === reviewId ? { ...review, isPublic: !review.isPublic } : review,
+  const togglePublicDisplay = async (reviewId: number | string) => {
+    const next = reviews.map((review) =>
+      String(review.id) === String(reviewId) ? { ...review, isPublic: !review.isPublic } : review,
     )
-    setReviews(updatedReviews)
+    setReviews(next)
 
     try {
-      await fetch("/api/reviews", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedReviews),
-      })
+      const changed = next.find((r) => String(r.id) === String(reviewId))
+      const hasApprovalKeys = next.some((r) => typeof r.approvalKey === "string")
+      if (hasApprovalKeys && changed) {
+        const approvalKey = changed.approvalKey || `${changed.listingId ? `${changed.listingId}:` : ""}${changed.id}`
+        await fetch("/api/reviews", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ approvalKey, isPublic: !!changed.isPublic }),
+        })
+      } else {
+        // Legacy fallback: send full array when approval keys are not present
+        await fetch("/api/reviews", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(next),
+        })
+      }
     } catch (error) {
       console.error("Failed to save reviews:", error)
       // Revert on error

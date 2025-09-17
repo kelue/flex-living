@@ -1,20 +1,22 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
+import { fetchHostawayReviews, normalizeHostawayReview, computeApprovalKey } from "@/lib/hostaway"
 
-const REVIEWS_FILE = path.join(process.cwd(), "data", "reviews.json")
+const DATA_DIR = path.join(process.cwd(), "data")
+const REVIEWS_FILE = path.join(DATA_DIR, "reviews.json")
+const APPROVALS_FILE = path.join(DATA_DIR, "review-approvals.json")
 
 // Ensure data directory exists
 async function ensureDataDir() {
-  const dataDir = path.join(process.cwd(), "data")
   try {
-    await fs.access(dataDir)
+    await fs.access(DATA_DIR)
   } catch {
-    await fs.mkdir(dataDir, { recursive: true })
+    await fs.mkdir(DATA_DIR, { recursive: true })
   }
 }
 
-// Initialize with default reviews if file doesn't exist
+// Initialize with default reviews if file doesn't exist (local fallback)
 async function initializeReviews() {
   const defaultReviews = [
     // Beautiful Pimlico Flat (Apartment) – 5 reviews
@@ -221,8 +223,48 @@ async function initializeReviews() {
   }
 }
 
-export async function GET() {
+async function readApprovals(): Promise<Record<string, boolean>> {
+  await ensureDataDir()
   try {
+    const raw = await fs.readFile(APPROVALS_FILE, "utf8")
+    return JSON.parse(raw)
+  } catch {
+    return {}
+  }
+}
+
+async function writeApprovals(map: Record<string, boolean>) {
+  await ensureDataDir()
+  await fs.writeFile(APPROVALS_FILE, JSON.stringify(map, null, 2))
+}
+
+function hasHostawayCreds() {
+  return !!(process.env.HOSTAWAY_CLIENT_ID && process.env.HOSTAWAY_CLIENT_SECRET)
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    // If Hostaway is configured, fetch live reviews and overlay approval flags
+    if (hasHostawayCreds()) {
+      try {
+        const { searchParams } = new URL(request.url)
+        const listingId = searchParams.get("listingId") || undefined
+        const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined
+        const offset = searchParams.get("offset") ? Number(searchParams.get("offset")) : undefined
+        const remote = await fetchHostawayReviews({ listingId, limit, offset })
+        const approvals = await readApprovals()
+        const normalized = remote.map((r: any) => {
+          const base = normalizeHostawayReview(r)
+          const isPublic = approvals[base.approvalKey] ?? false
+          return { ...base, isPublic }
+        })
+        return NextResponse.json(normalized)
+      } catch (err) {
+        console.error("Hostaway fetch failed, falling back to local reviews:", err)
+      }
+    }
+
+    // Fallback: local JSON file
     await initializeReviews()
     const data = await fs.readFile(REVIEWS_FILE, "utf8")
     const reviews = JSON.parse(data).map((r: any) => ({
@@ -239,8 +281,46 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     await ensureDataDir()
-    const reviews = await request.json()
-    await fs.writeFile(REVIEWS_FILE, JSON.stringify(reviews, null, 2))
+    const body = await request.json()
+
+    // If Hostaway is configured, interpret POST as approval updates
+    if (hasHostawayCreds()) {
+      // Supported shapes:
+      // 1) Array of reviews [{ id, listingId?, isPublic, ... }]
+      // 2) { approvalUpdates: [{ approvalKey, isPublic }] }
+      // 3) { approvalKey, isPublic }
+      const approvals = await readApprovals()
+
+      const updates: Array<{ key: string; value: boolean }> = []
+
+      if (Array.isArray(body)) {
+        for (const item of body) {
+          const key = item.approvalKey || computeApprovalKey({ id: item.id, listingId: item.listingId })
+          if (typeof item.isPublic === "boolean") updates.push({ key, value: item.isPublic })
+        }
+      } else if (body && Array.isArray(body.approvalUpdates)) {
+        for (const u of body.approvalUpdates) {
+          if (u && typeof u.approvalKey === "string" && typeof u.isPublic === "boolean") {
+            updates.push({ key: u.approvalKey, value: u.isPublic })
+          }
+        }
+      } else if (body && typeof body.approvalKey === "string" && typeof body.isPublic === "boolean") {
+        updates.push({ key: body.approvalKey, value: body.isPublic })
+      }
+
+      if (updates.length === 0) {
+        return NextResponse.json({ error: "No approval updates provided" }, { status: 400 })
+      }
+
+      for (const u of updates) {
+        approvals[u.key] = u.value
+      }
+      await writeApprovals(approvals)
+      return NextResponse.json({ success: true, updated: updates.length })
+    }
+
+    // Fallback behavior: store full reviews array locally (legacy demo mode)
+    await fs.writeFile(REVIEWS_FILE, JSON.stringify(body, null, 2))
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error saving reviews:", error)

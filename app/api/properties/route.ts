@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
+import { fetchHostawayListings, normalizeHostawayListing, getHostawayAmenityMap } from "@/lib/hostaway"
 
 const DATA_DIR = path.join(process.cwd(), "data")
 const PROPERTIES_FILE = path.join(DATA_DIR, "properties.json")
@@ -114,8 +115,38 @@ async function initializeProperties() {
   }
 }
 
-export async function GET() {
+function hasHostawayCreds() {
+  return !!(process.env.HOSTAWAY_CLIENT_ID && process.env.HOSTAWAY_CLIENT_SECRET)
+}
+
+export async function GET(request: NextRequest) {
   try {
+    if (hasHostawayCreds()) {
+      try {
+        const { searchParams } = new URL(request.url)
+        const params: any = {}
+        for (const key of [
+          "limit",
+          "offset",
+          "sortOrder",
+          "city",
+          "match",
+          "country",
+          "isSyncig",
+          "contactName",
+          "propertyTypeId",
+        ]) {
+          const val = searchParams.get(key)
+          if (val != null) params[key] = val
+        }
+        const [list, amenityMap] = await Promise.all([fetchHostawayListings(params), getHostawayAmenityMap()])
+        const normalized = list.map((r: any) => normalizeHostawayListing(r, { amenityMap }))
+        return NextResponse.json(normalized)
+      } catch (err) {
+        console.error("Hostaway properties fetch failed, falling back to local:", err)
+      }
+    }
+
     await initializeProperties()
     const content = await fs.readFile(PROPERTIES_FILE, "utf8")
     const properties = JSON.parse(content)

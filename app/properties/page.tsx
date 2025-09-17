@@ -1,35 +1,34 @@
 import Link from "next/link"
-import { promises as fs } from "fs"
-import path from "path"
 import { Badge } from "@/components/ui/badge"
+import { headers } from "next/headers"
 
 async function getProperties() {
-  const file = path.join(process.cwd(), "data", "properties.json")
-  try {
-    const content = await fs.readFile(file, "utf8")
-    return JSON.parse(content)
-  } catch {
-    return []
-  }
+  const h = headers()
+  const proto = h.get("x-forwarded-proto") || "http"
+  const host = h.get("host")
+  const base = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${proto}://${host}` : "http://localhost:3000")
+  const res = await fetch(`${base}/api/properties`, { cache: "no-store" })
+  if (!res.ok) return []
+  return res.json()
 }
 
 async function getPublicAverages() {
-  const file = path.join(process.cwd(), "data", "reviews.json")
-  try {
-    const content = await fs.readFile(file, "utf8")
-    const reviews = JSON.parse(content)
-    const byProp: Record<string, { sum: number; count: number }> = {}
-    for (const r of reviews) {
-      if (!r.isPublic) continue
-      const key = r.property
-      if (!byProp[key]) byProp[key] = { sum: 0, count: 0 }
-      byProp[key].sum += r.rating || 0
-      byProp[key].count += 1
-    }
-    return byProp
-  } catch {
-    return {}
+  const h = headers()
+  const proto = h.get("x-forwarded-proto") || "http"
+  const host = h.get("host")
+  const base = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${proto}://${host}` : "http://localhost:3000")
+  const res = await fetch(`${base}/api/reviews`, { cache: "no-store" })
+  if (!res.ok) return {}
+  const reviews = await res.json()
+  const byProp: Record<string, { sum: number; count: number }> = {}
+  for (const r of reviews) {
+    if (!r.isPublic) continue
+    const key = r.property
+    if (!byProp[key]) byProp[key] = { sum: 0, count: 0 }
+    byProp[key].sum += r.rating || 0
+    byProp[key].count += 1
   }
+  return byProp
 }
 
 export default async function PropertiesPage() {

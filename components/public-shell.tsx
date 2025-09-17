@@ -13,13 +13,13 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <>
-      <Header />
+    <div className="flex flex-col h-screen justify-between">
+      <Header  />
       <main>
         {children}
       </main>
       <Footer />
-    </>
+    </div>
   )
 }
 
