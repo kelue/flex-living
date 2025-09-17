@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Star } from "lucide-react"
 
-export function PropertyGallery() {
+export function PropertyGallery({ images }: { images?: string[] }) {
   return (
     <div className="relative">
       {/* All listings badge */}
@@ -26,19 +26,19 @@ export function PropertyGallery() {
           <div className="relative bottom-4 right-4 z-10">
             <Badge className="bg-white/90 text-gray-900 hover:bg-white">📷 + 17 photos</Badge>
           </div>
-          <img src="/modern-living-room-with-green-sofa-and-navy-chair.jpg" alt="Living room" className="w-full h-full object-cover" />
+          <img src={(images && images[0]) || "/modern-living-room-with-green-sofa-and-navy-chair.jpg"} alt="Living room" className="w-full h-full object-cover" />
         </div>
 
         {/* Top right images */}
         <div className="grid grid-cols-2 gap-2">
-          <img src="/modern-bedroom-with-white-bedding.jpg" alt="Bedroom" className="w-full h-full object-cover" />
-          <img src="/modern-bathroom-with-round-mirror.jpg" alt="Bathroom" className="w-full h-full object-cover" />
+          <img src={(images && images[1]) || "/modern-bedroom-with-white-bedding.jpg"} alt="Bedroom" className="w-full h-full object-cover" />
+          <img src={(images && images[2]) || "/modern-bathroom-with-round-mirror.jpg"} alt="Bathroom" className="w-full h-full object-cover" />
         </div>
 
         {/* Bottom right images */}
         <div className="grid grid-cols-2 gap-2">
-          <img src="/modern-white-kitchen.jpg" alt="Kitchen" className="w-full h-full object-cover" />
-          <img src="/modern-living-space-with-green-accents.jpg" alt="Living space" className="w-full h-full object-cover" />
+          <img src={(images && images[3]) || "/modern-white-kitchen.jpg"} alt="Kitchen" className="w-full h-full object-cover" />
+          <img src={(images && images[4]) || "/modern-living-space-with-green-accents.jpg"} alt="Living space" className="w-full h-full object-cover" />
         </div>
       </div>
     </div>

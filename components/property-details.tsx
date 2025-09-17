@@ -1,14 +1,33 @@
-import { Star, Wifi, Globe, Home, Package, Bath, ChefHat, Phone, Mail } from "lucide-react"
+import { Star, Wifi, Globe, Home, Package, Bath, ChefHat } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar02 } from "@/components/calendar02"
 
-export function PropertyDetails() {
+interface Amenity { icon?: string; label: string }
+
+export function PropertyDetails({
+  name = "Beautiful Pimlico Flat near Victoria Station",
+  summary = "Apartment • 4 guests • 1 bedroom • 1 bathroom",
+  description = "This spacious apartment in Pimlico is ideal for anyone looking for comfort and convenience...",
+  amenities = [
+    { label: "Free WiFi" },
+    { label: "Internet" },
+    { label: "Private living room" },
+    { label: "Essentials" },
+    { label: "Towels" },
+    { label: "Kitchen" },
+  ] as Amenity[],
+}: {
+  name?: string
+  summary?: string
+  description?: string
+  amenities?: Amenity[]
+}) {
   return (
     <div className="space-y-8">
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">Beautiful Pimlico Flat near Victoria Station</h1>
+        <h1 className="text-3xl font-bold text-gray-900">{name}</h1>
 
-        <div className="text-gray-600">Apartment • 4 guests • 1 bedroom • 1 bathroom</div>
+        <div className="text-gray-600">{summary}</div>
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1">
@@ -21,11 +40,7 @@ export function PropertyDetails() {
           </a>
         </div>
 
-        <div className="text-gray-700 leading-relaxed">
-          This spacious apartment in Pimlico is ideal for anyone looking for comfort and convenience. It's just a short
-          walk from everything you need – restaurants, shops, and public transport. The apartment has great quality
-          amenities, making it a perfect home away from home. I've made sure it's a welcoming,...
-        </div>
+        <div className="text-gray-700 leading-relaxed">{description}</div>
 
         <Button variant="ghost" className="p-0 h-auto text-gray-900 underline hover:no-underline">
           Show more
@@ -35,30 +50,18 @@ export function PropertyDetails() {
       <div className="border-t pt-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Amenities</h2>
         <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="flex items-center gap-3">
-            <Wifi className="w-5 h-5 text-gray-600" />
-            <span className="text-gray-700">Free WiFi</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Globe className="w-5 h-5 text-gray-600" />
-            <span className="text-gray-700">Internet</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Home className="w-5 h-5 text-gray-600" />
-            <span className="text-gray-700">Private living room</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Package className="w-5 h-5 text-gray-600" />
-            <span className="text-gray-700">Essentials</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Bath className="w-5 h-5 text-gray-600" />
-            <span className="text-gray-700">Towels</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <ChefHat className="w-5 h-5 text-gray-600" />
-            <span className="text-gray-700">Kitchen</span>
-          </div>
+          {amenities.map((a, idx) => (
+            <div key={idx} className="flex items-center gap-3">
+              {/* Simple icon selection by label */}
+              {a.label.toLowerCase().includes("wifi") && <Wifi className="w-5 h-5 text-gray-600" />}
+              {a.label.toLowerCase().includes("internet") && <Globe className="w-5 h-5 text-gray-600" />}
+              {a.label.toLowerCase().includes("living") && <Home className="w-5 h-5 text-gray-600" />}
+              {a.label.toLowerCase().includes("essential") && <Package className="w-5 h-5 text-gray-600" />}
+              {a.label.toLowerCase().includes("towel") && <Bath className="w-5 h-5 text-gray-600" />}
+              {a.label.toLowerCase().includes("kitchen") && <ChefHat className="w-5 h-5 text-gray-600" />}
+              <span className="text-gray-700">{a.label}</span>
+            </div>
+          ))}
         </div>
         <Button variant="ghost" className="p-0 h-auto text-gray-900 underline hover:no-underline">
           Show all 47 amenities
@@ -237,38 +240,6 @@ export function PropertyDetails() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Cancellation Policy</h3>
             <div className="text-gray-700">100% refund up to 14 days before arrival</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t pt-8 mt-16">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-8">
-            <div className="w-16 h-16 bg-teal-700 rounded flex items-center justify-center">
-              <div className="text-white font-bold text-xs">
-                <div>FLEX</div>
-                <div>LIVING</div>
-              </div>
-            </div>
-            <div className="flex gap-8">
-              <a href="#" className="text-gray-700 hover:text-gray-900">
-                Privacy Policy
-              </a>
-              <a href="#" className="text-gray-700 hover:text-gray-900">
-                Terms and conditions
-              </a>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-6 text-gray-700">
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4" />
-              <span>+447723745646</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              <span>info@theflexliving.com</span>
-            </div>
           </div>
         </div>
       </div>

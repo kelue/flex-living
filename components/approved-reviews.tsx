@@ -13,7 +13,7 @@ interface Review {
   category: string
 }
 
-export function ApprovedReviews() {
+export function ApprovedReviews({ propertyName }: { propertyName?: string }) {
   const [approvedReviews, setApprovedReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -27,7 +27,10 @@ export function ApprovedReviews() {
       if (response.ok) {
         const allReviews = await response.json()
         // Filter to only show reviews marked as public/approved in admin dashboard
-        const publicReviews = allReviews.filter((review: Review) => review.isPublic)
+        let publicReviews = allReviews.filter((review: Review) => review.isPublic)
+        if (propertyName) {
+          publicReviews = publicReviews.filter((r: Review) => r.property === propertyName)
+        }
         setApprovedReviews(publicReviews)
       }
     } catch (error) {
