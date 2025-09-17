@@ -460,15 +460,18 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card">
+      <header className="border-b border-border bg-card sticky top-0 z-1">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center space-x-4">
             <IconBuilding />
             <h1 className="text-xl font-bold text-foreground">Property Admin Dashboard</h1>
           </div>
           <div className="flex items-center space-x-4">
+                <Button asChild variant="outline">
+                  <Link href="/">Back to site</Link>
+                </Button>
             <Button variant="ghost" size="icon">
               <IconBell />
             </Button>
@@ -481,7 +484,7 @@ export function AdminDashboard({ activeView = "overview" }: { activeView?: Admin
 
       <div className="flex">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-border bg-sidebar">
+        <aside className="w-64 min-h-screen border-r border-border bg-sidebar">
           <nav className="p-4 space-y-2">
             <Button asChild variant="ghost" className={`w-full justify-start ${activeView === "overview" ? "bg-accent" : ""}`}>
               <Link href="/admin/overview">

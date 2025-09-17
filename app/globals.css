@@ -11,19 +11,19 @@
   --card-foreground: oklch(0.205 0 0); /* #1f2937 */
   --popover: oklch(1 0 0); /* #ffffff */
   --popover-foreground: oklch(0.205 0 0); /* #1f2937 */
-  --primary: oklch(0.205 0 0); /* #1f2937 */
-  --primary-foreground: oklch(1 0 0); /* #ffffff */
+  --primary: #0f766e; /* teal-700 */
+  --primary-foreground: #ffffff; /* white */
   --secondary: oklch(0.556 0 0); /* #6b7280 */
   --secondary-foreground: oklch(1 0 0); /* #ffffff */
   --muted: oklch(0.97 0 0); /* #f1f5f9 */
   --muted-foreground: oklch(0.439 0 0); /* #4b5563 */
-  --accent: oklch(0.646 0.222 264.376); /* #8b5cf6 */
-  --accent-foreground: oklch(1 0 0); /* #ffffff */
+  --accent: #14b8a6; /* teal-500 */
+  --accent-foreground: #ffffff; /* white */
   --destructive: oklch(0.577 0.245 27.325); /* #dc2626 */
   --destructive-foreground: oklch(1 0 0); /* #ffffff */
   --border: oklch(0.922 0 0); /* #e5e7eb */
   --input: oklch(0.985 0 0); /* #f9fafb */
-  --ring: oklch(0.646 0.222 264.376 / 0.5); /* rgba(139, 92, 246, 0.5) */
+  --ring: rgba(20, 184, 166, 0.5); /* teal-500 @ 50% */
   --chart-1: oklch(0.488 0.243 264.376); /* #4f46e5 */
   --chart-2: oklch(0.6 0.118 184.704); /* #3b82f6 */
   --chart-3: oklch(0.696 0.17 162.48); /* #10b981 */
@@ -34,10 +34,10 @@
   --sidebar-foreground: oklch(0.205 0 0); /* #1f2937 */
   --sidebar-primary: oklch(1 0 0); /* #ffffff */
   --sidebar-primary-foreground: oklch(0.205 0 0); /* #1f2937 */
-  --sidebar-accent: oklch(0.646 0.222 264.376); /* #8b5cf6 */
-  --sidebar-accent-foreground: oklch(1 0 0); /* #ffffff */
+  --sidebar-accent: #14b8a6; /* teal-500 */
+  --sidebar-accent-foreground: #ffffff; /* white */
   --sidebar-border: oklch(0.922 0 0); /* #e5e7eb */
-  --sidebar-ring: oklch(0.646 0.222 264.376 / 0.5); /* rgba(139, 92, 246, 0.5) */
+  --sidebar-ring: rgba(20, 184, 166, 0.5); /* teal ring */
 }
 
 .dark {
@@ -47,8 +47,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: #0f766e; /* teal-700 */
+  --primary-foreground: #0b2a28; /* deep teal text on light fg when inverted */
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -67,7 +67,7 @@
   --chart-5: oklch(0.645 0.246 16.439);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: #0f766e;
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
