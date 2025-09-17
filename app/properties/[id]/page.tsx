@@ -1,33 +1,31 @@
-import { promises as fs } from "fs"
-import path from "path"
 import { PropertyGallery } from "@/components/property-gallery"
 import { PropertyDetails } from "@/components/property-details"
 import { BookingPanel } from "@/components/booking-panel"
 import { ApprovedReviews } from "@/components/approved-reviews"
+import { headers } from "next/headers"
 
 async function getProperty(id: number) {
-  const file = path.join(process.cwd(), "data", "properties.json")
-  try {
-    const content = await fs.readFile(file, "utf8")
-    const list = JSON.parse(content)
-    return list.find((p: any) => p.id === id) || null
-  } catch {
-    return null
-  }
+  const h = headers()
+  const proto = h.get("x-forwarded-proto") || "http"
+  const host = h.get("host")
+  const base = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${proto}://${host}` : "http://localhost:3000")
+  const res = await fetch(`${base}/api/properties/${id}`, { cache: "no-store" })
+  if (!res.ok) return null
+  return res.json()
 }
 
 async function getReviewsForProperty(name: string) {
-  const file = path.join(process.cwd(), "data", "reviews.json")
-  try {
-    const content = await fs.readFile(file, "utf8")
-    const list = JSON.parse(content)
-    const propertyReviews = list.filter((r: any) => r.property === name)
-    const publicOnes = propertyReviews.filter((r: any) => r.isPublic)
-    const avg = publicOnes.length ? publicOnes.reduce((s: number, r: any) => s + (r.rating || 0), 0) / publicOnes.length : undefined
-    return { total: propertyReviews.length, publicCount: publicOnes.length, avg }
-  } catch {
-    return { total: 0, publicCount: 0, avg: undefined }
-  }
+  const h = headers()
+  const proto = h.get("x-forwarded-proto") || "http"
+  const host = h.get("host")
+  const base = process.env.NEXT_PUBLIC_BASE_URL || (host ? `${proto}://${host}` : "http://localhost:3000")
+  const res = await fetch(`${base}/api/reviews`, { cache: "no-store" })
+  if (!res.ok) return { total: 0, publicCount: 0, avg: undefined }
+  const list = await res.json()
+  const propertyReviews = list.filter((r: any) => r.property === name)
+  const publicOnes = propertyReviews.filter((r: any) => r.isPublic)
+  const avg = publicOnes.length ? publicOnes.reduce((s: number, r: any) => s + (r.rating || 0), 0) / publicOnes.length : undefined
+  return { total: propertyReviews.length, publicCount: publicOnes.length, avg }
 }
 
 export default async function PropertyDetailPage({ params }: { params: { id: string } }) {
@@ -56,6 +54,8 @@ export default async function PropertyDetailPage({ params }: { params: { id: str
             amenities={property.amenities || []}
             rating={typeof rev.avg === "number" ? rev.avg : undefined}
             reviewCount={rev.total}
+            lat={typeof property.lat === "number" ? property.lat : undefined}
+            lng={typeof property.lng === "number" ? property.lng : undefined}
           />
         </div>
 

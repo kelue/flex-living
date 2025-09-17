@@ -18,6 +18,8 @@ export function PropertyDetails({
   ] as Amenity[],
   rating,
   reviewCount,
+  lat,
+  lng,
 }: {
   name?: string
   summary?: string
@@ -25,6 +27,8 @@ export function PropertyDetails({
   amenities?: Amenity[]
   rating?: number
   reviewCount?: number
+  lat?: number
+  lng?: number
 }) {
   return (
     <div className="space-y-8">
@@ -74,22 +78,41 @@ export function PropertyDetails({
 
       <div className="border-t pt-8">
         <div className="w-full h-80 bg-gray-200 rounded-lg overflow-hidden relative">
-          <img
-            src="/london-map-showing-pimlico-area-with-red-pin-marke.jpg"
-            alt="Map showing property location in Pimlico, London"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-4 left-4 flex flex-col gap-1">
-            <button className="w-8 h-8 bg-white border border-gray-300 rounded flex items-center justify-center text-gray-700 hover:bg-gray-50">
-              +
-            </button>
-            <button className="w-8 h-8 bg-white border border-gray-300 rounded flex items-center justify-center text-gray-700 hover:bg-gray-50">
-              −
-            </button>
-          </div>
-          <div className="absolute bottom-2 right-2 text-xs text-gray-600 bg-white bg-opacity-75 px-2 py-1 rounded">
-            Leaflet, © OpenStreetMap, Report a map error
-          </div>
+          {typeof lat === "number" && typeof lng === "number" ? (
+            <>
+              <iframe
+                title="Property location map"
+                className="w-full h-full"
+                loading="lazy"
+                src={(function () {
+                  const d = 0.01
+                  const minLon = lng - d
+                  const minLat = lat - d
+                  const maxLon = lng + d
+                  const maxLat = lat + d
+                  const bbox = `${minLon}%2C${minLat}%2C${maxLon}%2C${maxLat}`
+                  const marker = `${lat}%2C${lng}`
+                  return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${marker}`
+                })()}
+                style={{ border: 0 }}
+                referrerPolicy="no-referrer-when-downgrade"
+              />
+              <a
+                href={`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}`}
+                target="_blank"
+                rel="noreferrer"
+                className="absolute bottom-2 right-2 text-xs text-gray-600 bg-white bg-opacity-75 px-2 py-1 rounded"
+              >
+                View on OpenStreetMap
+              </a>
+            </>
+          ) : (
+            <img
+              src="/london-map-showing-pimlico-area-with-red-pin-marke.jpg"
+              alt="Map placeholder"
+              className="w-full h-full object-cover"
+            />
+          )}
         </div>
       </div>
 

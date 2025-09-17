@@ -5,7 +5,7 @@ import { ApprovedReviews } from "@/components/approved-reviews"
 
 export function PropertyListing() {
   return (
-    <div className="space-y-10">
+    <div className="">
       <PropertyGallery />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

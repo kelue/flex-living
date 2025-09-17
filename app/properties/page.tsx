@@ -37,7 +37,6 @@ export default async function PropertiesPage() {
     <div className="container mx-auto px-4 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Properties</h1>
-        <Link href="/" className="text-sm underline">Home</Link>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
