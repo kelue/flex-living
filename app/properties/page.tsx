@@ -43,7 +43,7 @@ export default async function PropertiesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {properties.map((p: any) => (
-          <Link key={p.id} href={`/properties/${p.id}`} className="group border rounded-lg overflow-hidden bg-card">
+          <Link key={p.id} href={`/properties/${p.id}`} className="group border rounded-4xl overflow-hidden bg-card">
             <div className="relative h-56 w-full overflow-hidden">
               <img
                 src={p.gallery?.[0] || "/placeholder.jpg"}

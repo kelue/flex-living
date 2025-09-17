@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { Button } from "@/components/ui/button"
 import type { DateRange } from "react-day-picker"
 
-export function Calendar02() {
+export function DualCalendar() {
   const [range, setRange] = React.useState<DateRange | undefined>(undefined)
 
   const formatRangePart = (date?: Date) =>

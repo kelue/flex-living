@@ -1,6 +1,6 @@
 import { Star, Wifi, Globe, Home, Package, Bath, ChefHat } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Calendar02 } from "@/components/calendar02"
+import { DualCalendar } from "@/components/dualcalendar"
 
 interface Amenity { icon?: string; label: string }
 
@@ -95,7 +95,7 @@ export function PropertyDetails({
 
       <div className="border-t pt-8">
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Available days</h2>
-        <Calendar02 />
+        <DualCalendar />
       </div>
 
       <div className="border-t pt-8">
